@@ -1,0 +1,250 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>新年祝福</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #000;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #fireworksCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 2;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            max-width: 90%;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: #ffcc00;
+        }
+
+        input {
+            padding: 0.75rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.2rem;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            button:hover {
+                background-color: #ff1a1a;
+            }
+
+        #greeting {
+            margin-top: 1.5rem;
+            font-size: 1.4rem;
+            line-height: 1.6;
+            min-height: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="fireworksCanvas"></canvas>
+
+    <div class="container">
+        <h1>🎉 新年快乐 🎉</h1>
+        <input type="text" id="nameInput" placeholder="请输入你的名字" maxlength="10" />
+        <br />
+        <button onclick="generateGreeting()">生成祝福</button>
+        <div id="greeting"></div>
+    </div>
+
+    <script>
+        // 动态烟花效果（简化版）
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        });
+
+        const fireworks = [];
+        const particles = [];
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff9900'];
+
+        class Firework {
+        constructor(x, y, targetX, targetY) {
+        this.x = x;
+        this.y = y;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.speed = 2;
+        this.angle = Math.atan2(targetY - y, targetX - x);
+        this.vx = Math.cos(this.angle) * this.speed;
+        this.vy = Math.sin(this.angle) * this.speed;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        }
+
+        draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        }
+
+        explode() {
+        for (let i = 0; i < 100; i++) {
+        particles.push(new Particle(this.x, this.y, this.color));
+        }
+        }
+        }
+
+        class Particle {
+        constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = Math.random() * 2 + 0.5;
+        this.vx = (Math.random() - 0.5) * 6;
+        this.vy = (Math.random() - 0.5) * 6;
+        this.gravity = 0.05;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.02 + 0.005;
+        }
+
+        update() {
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decay;
+        }
+
+        draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+        }
+        }
+
+        function launchFirework() {
+        const x = Math.random() * canvas.width;
+        const y = canvas.height;
+        const targetX = Math.random() * canvas.width;
+        const targetY = Math.random() * canvas.height / 2;
+        fireworks.push(new Firework(x, y, targetX, targetY));
+        }
+
+        function animate() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 更新并绘制烟花
+        for (let i = fireworks.length - 1; i >= 0; i--) {
+        fireworks[i].update();
+        fireworks[i].draw();
+
+        if (
+        Math.abs(fireworks[i].x - fireworks[i].targetX) < 5 &&
+        Math.abs(fireworks[i].y - fireworks[i].targetY) < 5
+        ) {
+        fireworks[i].explode();
+        fireworks.splice(i, 1);
+        }
+        }
+
+        // 更新并绘制粒子
+        for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw();
+
+        if (particles[i].alpha <= 0) {
+        particles.splice(i, 1);
+        }
+        }
+
+        requestAnimationFrame(animate);
+        }
+
+        // 随机发射烟花
+        setInterval(launchFirework, 800);
+        animate();
+
+        // 祝福语生成逻辑
+        const greetings = [
+        `亲爱的{name}，愿你在新的一年里：笑口常开，好运连连，钱包鼓鼓，烦恼全无！`,
+        `嗨，{name}！新年到啦～愿你吃好睡好心情好，事业爱情双丰收！`,
+        `{name}，祝你龙年大吉，心想事成，每天都有小确幸，生活比烟花还灿烂！`,
+        `给{name}的新春祝福：平安喜乐常相伴，幸福安康永相随！`,
+        `嘿，{name}！新的一年，愿你所求皆如愿，所行化坦途，多喜乐，长安宁！`,
+        `{name}，新年新气象，愿你眼里有光，心中有爱，脚下有路，未来可期！`,
+        `致{name}：愿你2026年顺风顺水顺财神，朝朝暮暮有人疼！`,
+        `{name}，新年快乐！愿你既有烟火人间的热闹，也有诗和远方的从容。`
+        ];
+
+        function generateGreeting() {
+        const name = document.getElementById('nameInput').value.trim();
+        const greetingEl = document.getElementById('greeting');
+
+        if (!name) {
+        greetingEl.textContent = '请输入你的名字哦～';
+        return;
+        }
+
+        const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+        const personalized = randomGreeting.replace(/{name}/g, name);
+        greetingEl.textContent = personalized;
+        }
+
+        // 支持回车键触发
+        document.getElementById('nameInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') generateGreeting();
+        });
+    </script>
+
+</body>
+</html>
